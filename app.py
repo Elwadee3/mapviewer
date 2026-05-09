@@ -500,27 +500,31 @@ mappings = extract_mappings(row, df, top_k)
 # -------------------------
 if tab_choice == "📊 Mappings":
     st.markdown('<div class="main-title">Control Mapping Viewer</div>', unsafe_allow_html=True)
-    st.markdown(
-        f'<div class="subtitle">Viewing mappings for: <b>{selected_control}</b> ({len(mappings)} mappings)</div>',
-        unsafe_allow_html=True
-    )
-    st.write("")
+    st.markdown(f'<div class="subtitle">Viewing: <b>{selected_control}</b></div>', unsafe_allow_html=True)
 
-    # --- تعديل 2: حذف العمود الأيمن (الجزء الأحمر) وتوسيع الرسم ---
-    # استبدلنا [3.2, 1.7] بـ [1] ليأخذ كامل العرض
-    main_col = st.columns([1])[0]
+    # هذا السطر يقسم الصفحة إلى قسمين: الرسم البياني (يسار) والبطاقات (يمين)
+    left, right = st.columns([3.0, 1.8]) 
 
-    with main_col:
-        graph_html = create_graph(selected_control, source_text, mappings)
+    with left:
         st.markdown('<div class="graph-box">', unsafe_allow_html=True)
-        components.html(graph_html, height=610, scrolling=False)
+        graph_html = create_graph(selected_control, source_text, mappings)
+        components.html(graph_html, height=650)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ملاحظة: تم حذف قسم (RIGHT CARDS) تماماً بناءً على طلبك
-
-
-# -------------------------
-# ANALYTICS PAGE (تم الإبقاء عليها كاملة)
+    with right:
+        st.markdown("### Mapping Details")
+        # حاوية البطاقات الجانبية
+        card_container = st.container(height=650)
+        with card_container:
+            for item in mappings:
+                # الكارد يظهر هنا بدون سطر "score-line" الذي يحتوي على النسب المئوية
+                st.markdown(f"""
+                <div class="mapping-card">
+                    <span class="rank-pill">#{item['rank']}</span>
+                    <span class="mapping-title">{item['mapping']}</span>
+                    <div class="mapping-text">{item['text']}</div>
+                </div>
+                """, unsafe_allow_html=True)
 # -------------------------
 elif tab_choice == "📈 Analytics":
 
