@@ -4,8 +4,7 @@ from pyvis.network import Network
 import streamlit.components.v1 as components
 import tempfile
 import html
-import os # أضفنا هذا للمسارات
-
+import os 
 st.set_page_config(
     page_title="Control Mapping Viewer",
     layout="wide",
@@ -13,7 +12,7 @@ st.set_page_config(
 )
 
 # -------------------------
-# CSS STYLE (تم الإبقاء عليه كاملاً)
+# CSS STYLE 
 # -------------------------
 st.markdown("""
 <style>
@@ -167,7 +166,7 @@ div.stButton > button:hover {
 
 
 # -------------------------
-# HELPERS (تم الإبقاء عليها كاملة)
+# HELPERS 
 # -------------------------
 def short_text(text, limit=150):
     text = str(text)
@@ -380,13 +379,13 @@ tab_choice = st.sidebar.radio(
     horizontal=True
 )
 
-# --- تعديل 1: قراءة الملف تلقائياً ---
-DATA_PATH = "final_ontology_refined_mappings_with_explanations.csv" # تأكد أن ملفك بهذا الاسم في GitHub
+
+DATA_PATH = "final_ontology_refined_mappings_with_explanations.csv" 
 
 if os.path.exists(DATA_PATH):
     df = pd.read_csv(DATA_PATH)
 else:
-    # إذا لم يجد الملف، يظهر خيار الرفع كبديل احتياطي
+   
     uploaded_file = st.file_uploader("Custom CSV for ECC (File not found locally):", type=["csv"])
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
@@ -502,7 +501,7 @@ if tab_choice == "📊 Mappings":
     st.markdown('<div class="main-title">Control Mapping Viewer</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="subtitle">Viewing: <b>{selected_control}</b></div>', unsafe_allow_html=True)
 
-    # هذا السطر يقسم الصفحة إلى قسمين: الرسم البياني (يسار) والبطاقات (يمين)
+    
     left, right = st.columns([3.0, 1.8]) 
 
     with left:
@@ -513,11 +512,11 @@ if tab_choice == "📊 Mappings":
 
     with right:
         st.markdown("### Mapping Details")
-        # حاوية البطاقات الجانبية
+        
         card_container = st.container(height=650)
         with card_container:
             for item in mappings:
-                # الكارد يظهر هنا بدون سطر "score-line" الذي يحتوي على النسب المئوية
+               
                 st.markdown(f"""
                 <div class="mapping-card">
                     <span class="rank-pill">#{item['rank']}</span>
@@ -628,7 +627,4 @@ elif tab_choice == "📈 Analytics":
     with s3:
         st.markdown(f'<div class="metric-box"><div class="metric-number">{avg_jaccard:.1f}%</div><div class="metric-label">Avg Jaccard Similarity</div><div class="progress-bg"><div class="progress-green" style="width:{avg_jaccard}%;"></div></div></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-
-    # (بقية قسم الـ Analytics مستمر بنفس الطريقة...)
-    # [ملاحظة: تم الإبقاء على كافة الحسابات والجداول كما هي في الكود الأصلي]
     st.stop()
