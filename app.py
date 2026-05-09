@@ -381,7 +381,7 @@ tab_choice = st.sidebar.radio(
 )
 
 # --- تعديل 1: قراءة الملف تلقائياً ---
-DATA_PATH = "final_data.csv" # تأكد أن ملفك بهذا الاسم في GitHub
+DATA_PATH = "final_ontology_refined_mappings_with_explanations.csv" # تأكد أن ملفك بهذا الاسم في GitHub
 
 if os.path.exists(DATA_PATH):
     df = pd.read_csv(DATA_PATH)
