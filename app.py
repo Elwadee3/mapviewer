@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import streamlit as st
 import re
 from dotenv import load_dotenv
 from groq import Groq
@@ -141,7 +142,13 @@ Differences: ...
 
 def run():
 
-    input_path = "final_ontology_refined_mappings_with_explanations.csv"
+# تحديد المسار بشكل ديناميكي ليعمل على GitHub وسيرفر Streamlit
+base_path = os.path.dirname(__file__)
+input_file = os.path.join(base_path, "final_ontology_refined_mappings_with_explanations.csv")
+
+# التحقق من وجود الملف قبل محاولة قراءته
+if not os.path.exists(input_file):
+    st.error(f"⚠️ خطأ: لم يتم العثور على ملف البيانات في المسار: {input_file}")
     output_path = "final_with_explanations.csv"
 
     df = pd.read_csv(input_path)
