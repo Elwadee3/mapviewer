@@ -141,8 +141,8 @@ Differences: ...
 
 def run():
 
-    input_path = "data/final_owl_ontology_refined_mappings.csv"
-    output_path = "data/final_with_explanations.csv"
+    input_path = "final_ontology_refined_mappings_with_explanations.csv"
+    output_path = "final_with_explanations.csv"
 
     df = pd.read_csv(input_path)
 
