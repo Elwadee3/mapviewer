@@ -327,37 +327,35 @@ def create_graph(selected_control, source_text, mappings):
             size=30
         )
 
-        # تحديد نوع العلاقة واللون بناءً على الرتبة (Rank)
+        # --- تعديل الألوان للون الأزرق الغامق ---
+        # أزرق غامق ملكي للرتب 1-3
+        primary_blue = "#1e3a8a" 
+        # أزرق رمادي غامق للرتب 4-10
+        secondary_blue = "#334155" 
+
+        edge_color = primary_blue if item["rank"] <= 3 else secondary_blue
         relation = "PRIMARY SUBSET" if item["rank"] <= 3 else "SECONDARY SUBSET"
-        
-        # --- تعديل الألوان لضمان الوضوح التام ---
-        # استخدام أخضر غامق وزاهي (Vibrant Dark Green)
-        primary_color = "#059669" 
-        # استخدام برتقالي غامق وزاهي (Dark Amber)
-        secondary_color = "#d97706" 
 
-        edge_color = primary_color if item["rank"] <= 3 else secondary_color
-
-        # إضافة السهم مع إظهار الرقم الترتيبي بوضوح عالي
+        # إضافة السهم مع إظهار الرقم الترتيبي باللون الأزرق الغامق
         net.add_edge(
             selected_control,
             item["mapping"],
-            label=f" #{item['rank']} ", # إضافة مسافات حول الرقم للوضوح
-            title=f"{relation} | Score: {score_percent:.0f}%", # التفاصيل عند تمرير الماوس
+            label=f" #{item['rank']} ", 
+            title=f"{relation} | Score: {score_percent:.0f}%",
             value=max(score_percent / 25, 1),
-            width=4 if item["rank"] <= 3 else 2, # جعل الأسهم الأولى أكثر سماكة
+            width=4 if item["rank"] <= 3 else 2,
             color={
-                "color": "#e2e8f0", # لون السهم الأساسي فاتح جداً
+                "color": "#cbd5e1", # لون السهم رمادي فاتح لكي يبرز النص فوقه
                 "highlight": edge_color,
                 "hover": edge_color
             },
             font={
-                "color": edge_color, # لون الرقم نفسه غامق وزاهي
-                "size": 26, # تكبير حجم الرقم ليكون بارزاً جداً
+                "color": edge_color, # لون الرقم أزرق غامق
+                "size": 28, # تكبير الرقم ليكون واضحاً جداً
                 "face": "arial",
-                "bold": True, # جعل الرقم عريضاً (Bold)
-                "strokeWidth": 4, # تحديد أبيض سميك جداً حول الرقم
-                "strokeColor": "#ffffff", # لون التحديد أبيض ناصع
+                "bold": True,
+                "strokeWidth": 5, # تحديد أبيض عريض خلف الرقم لزيادة التباين
+                "strokeColor": "#ffffff",
                 "align": "middle"
             }
         )
