@@ -256,14 +256,12 @@ def create_graph(selected_control, source_text, mappings):
             "highlight": "#19a34a"
         },
         "smooth": false,
-
         "font": {
             "size": 16,
             "face": "arial",
             "strokeWidth": 3,
             "strokeColor": "#ffffff"
         },
-
         "scaling": {
             "label": {
             "enabled": false
@@ -288,6 +286,7 @@ def create_graph(selected_control, source_text, mappings):
     }
     """)
 
+    # إضافة النود الرئيسية (ECC Control)
     net.add_node(
         selected_control,
         label=selected_control,
@@ -309,6 +308,7 @@ def create_graph(selected_control, source_text, mappings):
     for item in mappings:
         score_percent = item["final"] * 100
 
+        # إضافة نودز الـ NIST المترابطة
         net.add_node(
             item["mapping"],
             label=item["mapping"],
@@ -317,30 +317,28 @@ def create_graph(selected_control, source_text, mappings):
                 "background": "#328a36",
                 "border": "#1b1b1b"
             },
-        font={
-            "color": "#ffffff",
-            "size": 20,
-            "face": "arial",
-            "bold": True
-        },
+            font={
+                "color": "#ffffff",
+                "size": 20,
+                "face": "arial",
+                "bold": True
+            },
             shape="circle",
             size=30
         )
 
+        # التعديل الجديد: تحديد العلاقة واللون بناءً على الرتبة (Rank)
         relation = "PRIMARY SUBSET" if item["rank"] <= 3 else "SECONDARY SUBSET"
+        edge_color = "#10b981" if item["rank"] <= 3 else "#f59e0b"
 
-        if relation == "PRIMARY SUBSET":
-            edge_color = "#10b981"   # green
-        else:
-            edge_color = "#f59e0b"   # orange
-
+        # إضافة السهم مع إظهار الرقم الترتيبي فقط (Rank)
         net.add_edge(
             selected_control,
             item["mapping"],
-            label=f"{relation}\n{score_percent:.0f}%",
-            title=f"{relation} | {item['confidence']}",
+            label=f"#{item['rank']}", # عرض الرقم مثل: #1, #2, #3
+            title=f"{relation} | Score: {score_percent:.0f}%", # التفاصيل عند تمرير الماوس
             value=max(score_percent / 25, 1),
-            width=2 if relation == "PRIMARY SUBSET" else 2,
+            width=4 if item["rank"] <= 3 else 2, # جعل الأسهم الأولى أكثر سماكة
             color={
                 "color": "#dcd2d2",
                 "highlight": edge_color,
@@ -348,10 +346,10 @@ def create_graph(selected_control, source_text, mappings):
             },
             font={
                 "color": edge_color,
-                "size": 16,
+                "size": 22, # تكبير الخط ليكون الرقم واضحاً جداً
                 "face": "arial",
-                "strokeWidth": 1,
-                "strokeColor": "#ffffff",
+                "strokeWidth": 3,
+                "strokeColor": "#ffffff", # تحديد أبيض حول الرقم لتمييزه
                 "align": "middle"
             }
         )
@@ -360,7 +358,6 @@ def create_graph(selected_control, source_text, mappings):
         net.save_graph(tmp.name)
         with open(tmp.name, "r", encoding="utf-8") as f:
             return f.read()
-
 
 # -------------------------
 # SIDEBAR
