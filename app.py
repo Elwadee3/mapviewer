@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import re
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from groq import Groq
 from tqdm import tqdm
 
