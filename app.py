@@ -100,4 +100,4 @@ Rules:
 # ==========================================
 def run():
     # تأكد من صحة مسارات الملفات في مجلد مشروعك
-    input_file = "data/final_owl_ontology_refined_
+    input_file = "final_owl_ontology_refined_mappings.csv"
