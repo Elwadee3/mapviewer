@@ -327,29 +327,37 @@ def create_graph(selected_control, source_text, mappings):
             size=30
         )
 
-        # التعديل الجديد: تحديد العلاقة واللون بناءً على الرتبة (Rank)
+        # تحديد نوع العلاقة واللون بناءً على الرتبة (Rank)
         relation = "PRIMARY SUBSET" if item["rank"] <= 3 else "SECONDARY SUBSET"
-        edge_color = "#10b981" if item["rank"] <= 3 else "#f59e0b"
+        
+        # --- تعديل الألوان لضمان الوضوح التام ---
+        # استخدام أخضر غامق وزاهي (Vibrant Dark Green)
+        primary_color = "#059669" 
+        # استخدام برتقالي غامق وزاهي (Dark Amber)
+        secondary_color = "#d97706" 
 
-        # إضافة السهم مع إظهار الرقم الترتيبي فقط (Rank)
+        edge_color = primary_color if item["rank"] <= 3 else secondary_color
+
+        # إضافة السهم مع إظهار الرقم الترتيبي بوضوح عالي
         net.add_edge(
             selected_control,
             item["mapping"],
-            label=f"#{item['rank']}", # عرض الرقم مثل: #1, #2, #3
+            label=f" #{item['rank']} ", # إضافة مسافات حول الرقم للوضوح
             title=f"{relation} | Score: {score_percent:.0f}%", # التفاصيل عند تمرير الماوس
             value=max(score_percent / 25, 1),
             width=4 if item["rank"] <= 3 else 2, # جعل الأسهم الأولى أكثر سماكة
             color={
-                "color": "#dcd2d2",
+                "color": "#e2e8f0", # لون السهم الأساسي فاتح جداً
                 "highlight": edge_color,
                 "hover": edge_color
             },
             font={
-                "color": edge_color,
-                "size": 22, # تكبير الخط ليكون الرقم واضحاً جداً
+                "color": edge_color, # لون الرقم نفسه غامق وزاهي
+                "size": 26, # تكبير حجم الرقم ليكون بارزاً جداً
                 "face": "arial",
-                "strokeWidth": 3,
-                "strokeColor": "#ffffff", # تحديد أبيض حول الرقم لتمييزه
+                "bold": True, # جعل الرقم عريضاً (Bold)
+                "strokeWidth": 4, # تحديد أبيض سميك جداً حول الرقم
+                "strokeColor": "#ffffff", # لون التحديد أبيض ناصع
                 "align": "middle"
             }
         )
