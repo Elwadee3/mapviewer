@@ -572,3 +572,6 @@ results.append({
     "commonality": row.get(f"Commonality {i}" if i > 1 else "Commonality", "No data"),
     "justification": row.get(f"Justification {i}" if i > 1 else "Justification", "No data")
 })
+# بدلاً من استخدام <b>، استخدم النجمتين (**)
+st.markdown(f"**Mapping:** {m['mapping']}")
+st.markdown(f"**Commonality:** {m['commonality']}")
