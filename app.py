@@ -565,3 +565,10 @@ elif tab_choice == "📈 Analytics":
         st.markdown(f'<div class="metric-box"><div class="metric-number">{avg_jaccard:.1f}%</div><div class="metric-label">Avg Jaccard Similarity</div><div class="progress-bg"><div class="progress-green" style="width:{avg_jaccard}%;"></div></div></div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
+# تحديث بسيط لدالة extract_mappings
+results.append({
+    "rank": i,
+    "mapping": str(row.get(cols["mapping"], "")),
+    "commonality": row.get(f"Commonality {i}" if i > 1 else "Commonality", "No data"),
+    "justification": row.get(f"Justification {i}" if i > 1 else "Justification", "No data")
+})
