@@ -231,135 +231,72 @@ def extract_mappings(row, df, top_k):
 
 
 def create_graph(selected_control, source_text, mappings):
-    net = Network(
-        height="580px",
-        width="100%",
-        bgcolor="#ffffff",
-        directed=False
-    )
+    net = Network(height="620px", width="100%", bgcolor="#ffffff", directed=False)
+    
+    # اللون الأزرق الغامق الملكي
+    dark_blue = "#1e3a8a" 
 
     net.set_options("""
     {
-      "nodes": {
-        "borderWidth": 2,
-        "borderWidthSelected": 4,
-        "font": {
-          "size": 18,
-          "face": "arial",
-          "color": "white",
-          "strokeWidth": 0
-        }
+      "edges": {
+        "font": { "strokeWidth": 5, "strokeColor": "#ffffff", "align": "middle" },
+        "smooth": {"type": "continuous"}
       },
-        "edges": {
-        "color": {
-            "color": "#bdbdbd",
-            "highlight": "#19a34a"
-        },
-        "smooth": false,
-
-        "font": {
-            "size": 16,
-            "face": "arial",
-            "strokeWidth": 3,
-            "strokeColor": "#ffffff"
-        },
-
-        "scaling": {
-            "label": {
-            "enabled": false
-            }
-        }
-        },
-      "physics": {
-        "enabled": true,
-        "solver": "repulsion",
-        "repulsion": {
-          "nodeDistance": 180,
-          "centralGravity": 0.18,
-          "springLength": 160,
-          "springConstant": 0.04,
-          "damping": 0.09
-        },
-        "stabilization": {
-          "enabled": true,
-          "iterations": 200
-        }
-      }
+      "physics": { "enabled": true, "solver": "repulsion", "repulsion": { "nodeDistance": 220 } }
     }
     """)
 
-    net.add_node(
-        selected_control,
-        label=selected_control,
-        title=html.escape(source_text),
-        color={
-            "background": "#1687d9",
-            "border": "#0b4f8a"
-        },
-        font={
-            "color": "#ffffff",
-            "size": 50,
-            "face": "arial",
-            "bold": True
-        },
-        shape="circle",
-        size=150
-    )
+    # النود المركزية (ECC)
+    net.add_node(selected_control, label=selected_control, title="Main Control", color="#1687d9", size=100)
 
     for item in mappings:
-        score_percent = item["final"] * 100
-
-        net.add_node(
-            item["mapping"],
-            label=item["mapping"],
-            title=html.escape(item["text"]),
-            color={
-                "background": "#328a36",
-                "border": "#1b1b1b"
-            },
-        font={
-            "color": "#ffffff",
-            "size": 20,
-            "face": "arial",
-            "bold": True
-        },
-            shape="circle",
-            size=30
-        )
-
-        relation = "PRIMARY SUBSET" if item["rank"] <= 3 else "SECONDARY SUBSET"
-
-        if relation == "PRIMARY SUBSET":
-            edge_color = "#10b981"   # green
-        else:
-            edge_color = "#f59e0b"   # orange
-
+        # تجهيز نص الـ Tooltip الذي يظهر عند التمرير
+        # سنعرض فيه الـ Explanation والـ Justification والـ Differences
+        hover_info = f"""
+        <b>Mapping:</b> {item['mapping']}<br>
+        <b>Commonality:</b> {item.get('commonality', 'N/A')}<br>
+        <b>Justification:</b> {item.get('justification', 'N/A')}<br>
+        <b>Differences:</b> {item.get('differences', 'N/A')}<br>
+        <b>Explanation:</b> {item.get('explanation', 'N/A')}
+        """
+        
+        net.add_node(item["mapping"], label=item["mapping"], title=item['text'], color="#328a36", size=30)
+        
+        # إضافة السهم مع المعلومات الجديدة
         net.add_edge(
-            selected_control,
+            selected_control, 
             item["mapping"],
-            label=f"{relation}\n{score_percent:.0f}%",
-            title=f"{relation} | {item['confidence']}",
-            value=max(score_percent / 25, 1),
-            width=2 if relation == "PRIMARY SUBSET" else 2,
-            color={
-                "color": "#dcd2d2",
-                "highlight": edge_color,
-                "hover": edge_color
-            },
-            font={
-                "color": edge_color,
-                "size": 16,
-                "face": "arial",
-                "strokeWidth": 1,
-                "strokeColor": "#ffffff",
-                "align": "middle"
-            }
+            label=f" #{item['rank']} ",
+            title=hover_info, # هنا تظهر المعلومات عند التمرير
+            color={"color": "#cbd5e1", "highlight": dark_blue},
+            font={"color": dark_blue, "size": 28, "bold": True}
         )
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as tmp:
         net.save_graph(tmp.name)
         with open(tmp.name, "r", encoding="utf-8") as f:
             return f.read()
+
+# ملاحظة: تأكد من تحديث دالة extract_mappings لجلب هذه الأعمدة من ملف الـ CSV الخاص بك
+def extract_mappings(row, df, top_k):
+    results = []
+    for i in range(1, 11):
+        cols = get_mapping_columns(i)
+        if cols["mapping"] not in df.columns or pd.isna(row.get(cols["mapping"])):
+            continue
+        
+        # تأكد أن مسميات الأعمدة في الـ CSV تطابق هذه المفاتيح
+        results.append({
+            "rank": i,
+            "mapping": str(row.get(cols["mapping"], "")),
+            "text": str(row.get(cols["text"], "")),
+            "final": float(row.get(cols["final"], 0)),
+            "commonality": row.get(f"Commonality {i}" if i > 1 else "Commonality", "No data"),
+            "justification": row.get(f"Justification {i}" if i > 1 else "Justification", "No data"),
+            "differences": row.get(f"Differences {i}" if i > 1 else "Differences", "No data"),
+            "explanation": row.get(f"Explanation {i}" if i > 1 else "Explanation", "No data")
+        })
+    return sorted(results, key=lambda x: x["final"], reverse=True)[:top_k]
 
 
 # -------------------------
