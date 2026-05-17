@@ -10,31 +10,52 @@ import os
 st.set_page_config(page_title="Control Mapping Viewer", layout="wide")
 
 # -------------------------
-# تحسين المظهر باستخدام CSS (البطاقات الجانبية وصندوق البحث)
+# تحسين المظهر باستخدام CSS المطور للبطاقات القابلة للضغط مباشرة
 # -------------------------
 st.markdown("""
 <style>
-    /* تخصيص صندوق البحث */
+    /* تخصيص صندوق البحث الجانبي */
     div[data-testid="stSidebar"] .stTextInput input {
         border-radius: 6px;
         border: 1px solid #cbd5e1;
         padding: 8px;
     }
     
-    /* تصميم البطاقات الجانبية */
+    /* إلغاء الهوامش المزعجة لأزرار المكونات الشفافة */
+    div.stButton > button {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        text-align: left !important;
+        box-shadow: none !important;
+    }
+    div.stButton > button:hover {
+        background: transparent !important;
+        border: none !important;
+    }
+    div.stButton > button:active {
+        background: transparent !important;
+        border: none !important;
+    }
+    
+    /* تصميم مظهر البطاقات الجانبية */
     .control-card {
         border: 1px solid #e2e8f0;
         border-radius: 8px;
-        padding: 12px;
+        padding: 14px;
         margin-bottom: 12px;
         background-color: #ffffff;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        cursor: pointer;
-        transition: transform 0.2s, border-color 0.2s;
+        transition: border-color 0.2s, background-color 0.2s;
+        width: 100%;
+        box-sizing: border-box;
     }
     .control-card:hover {
         border-color: #1687d9;
-        transform: translateY(-2px);
+        background-color: #f8fafc;
     }
     .control-card-active {
         border: 2px solid #1687d9;
@@ -42,8 +63,8 @@ st.markdown("""
     }
     .card-id {
         font-weight: bold;
-        color: #334155;
-        font-size: 15px;
+        color: #1e293b;
+        font-size: 16px;
         margin-bottom: 4px;
     }
     .card-text {
@@ -51,6 +72,7 @@ st.markdown("""
         color: #64748b;
         line-height: 1.4;
         margin-bottom: 6px;
+        white-space: normal;
     }
     .card-footer {
         font-size: 12px;
@@ -111,7 +133,7 @@ def create_graph(selected_id, source_text, mappings):
     net.set_options("""
     {
       "physics": {
-        "forceAtlas2Based": { "gravitationalConstant": -150, "springLength": 240 },
+        "forceAtlas2Based": { "gravitationalConstant": -180, "springLength": 260 },
         "solver": "forceAtlas2Based", "stabilization": { "iterations": 1000 }
       },
       "nodes": { "font": { "size": 18, "face": "arial" }, "borderWidth": 2 },
@@ -121,21 +143,20 @@ def create_graph(selected_id, source_text, mappings):
     }
     """)
     
-    # تثبيت تكبير الحجم للدائرة المركزية الزرقاء (110) لضمان التناسق البصري
+    # تكبير الدائرة المركزية الزرقاء بشكل ضخم وبارز جداً وضبط أبعاد الخط بداخلها
     net.add_node(
         selected_id, 
         label=selected_id, 
         title=html.escape(source_text), 
         color="#1687d9", 
-        size=110, 
+        size=160,  # تم التكبير بشكل ملحوظ بناءً على طلبك لتبدو ضخمة ومتناسقة
         shape="circle", 
-        font={'color': 'white', 'size': 28, 'bold': True}
+        font={'color': 'white', 'size': 32, 'bold': True}
     )
 
     for idx, item in enumerate(mappings):
         edge_width = max(1, 10 - idx)
         
-        # تنسيق النص للمتصفحات بدون إظهار أكواد التنسيق الخام
         hover_info = (
             f"Mapping: {item['mapping']}\n"
             f"Commonality: {item['commonality']}\n"
@@ -176,8 +197,6 @@ if os.path.exists(DATA_FILE):
     df.columns = [c.strip() for c in df.columns]
     
     st.sidebar.title("Controls List")
-    
-    # إصلاح السطر المسبب للمشكلة بالكامل هنا ليعمل بأمان
     search_query = st.sidebar.text_input("Search by control number (e.g., 2.4)", placeholder="Type to filter...")
     
     unique_controls = df["ECC id control"].unique()
@@ -188,6 +207,7 @@ if os.path.exists(DATA_FILE):
     
     st.sidebar.markdown("### Controls")
     
+    # إدارة تهيئة وتحديث العنصر النشط في الواجهة
     if "selected_control_id" not in st.session_state and len(filtered_controls) > 0:
         st.session_state.selected_control_id = filtered_controls[0]
     elif len(filtered_controls) > 0 and st.session_state.selected_control_id not in filtered_controls:
@@ -202,17 +222,21 @@ if os.path.exists(DATA_FILE):
             is_active = (str(ctrl_id) == str(st.session_state.selected_control_id))
             card_class = "control-card control-card-active" if is_active else "control-card"
             
-            st.sidebar.markdown(f"""
-            <div class="{card_class}">
-                <div class="card-id">{ctrl_id}</div>
-                <div class="card-text">{short_text}</div>
-                <div class="card-footer">10 recommended mappings</div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.sidebar.button(f"Select {ctrl_id}", key=f"btn_{ctrl_id}", use_container_width=True):
-                st.session_state.selected_control_id = ctrl_id
-                st.rerun()
+            # حيلة هندسية ذكية: نغلف البطاقة بالكامل داخل زر شفاف ممتد العرض 
+            # ليتم التقاط النقرة على البطاقة الجانبية مباشرة دون الحاجة لزر مخصص
+            with st.sidebar:
+                if st.button(label=f"hidden_click_{ctrl_id}", key=f"btn_{ctrl_id}"):
+                    st.session_state.selected_control_id = ctrl_id
+                    st.rerun()
+                
+                # طباعة المظهر الفعلي للبطاقة ليتلقى المظهر النشط
+                st.markdown(f"""
+                <div class="{card_class}" style="margin-top: -38px; pointer-events: none;">
+                    <div class="card-id">{ctrl_id}</div>
+                    <div class="card-text">{short_text}</div>
+                    <div class="card-footer">10 recommended mappings</div>
+                </div>
+                """, unsafe_allow_html=True)
     else:
         st.sidebar.info("No matching controls found.")
     
@@ -223,6 +247,7 @@ if os.path.exists(DATA_FILE):
         row = df[df["ECC id control"].astype(str) == str(selected_id)].iloc[0]
         mappings = extract_mappings(row, df)
 
+        # توليد وعرض الرسم البياني مع الدائرة الكبيرة الجديدة
         graph_html = create_graph(str(selected_id), str(row["Source Text"]), mappings)
         components.html(graph_html, height=680)
 
