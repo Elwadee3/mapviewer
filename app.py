@@ -6,11 +6,11 @@ import tempfile
 import html
 import os
 
-# إعداد الصفحة وتكبير المساحة
+# إعداد الصفحة
 st.set_page_config(page_title="Control Mapping Viewer", layout="wide")
 
 # -------------------------
-# تحسين المظهر باستخدام CSS المطور للبطاقات التفاعلية بالكامل
+# تحسين المظهر باستخدام CSS المطور للبطاقات القابلة للضغط مباشرة
 # -------------------------
 st.markdown("""
 <style>
@@ -21,7 +21,27 @@ st.markdown("""
         padding: 8px;
     }
     
-    /* تصميم البطاقات الجانبية الفخمة والمحددة */
+    /* إلغاء الهوامش المزعجة لأزرار المكونات الشفافة */
+    div.stButton > button {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        text-align: left !important;
+        box-shadow: none !important;
+    }
+    div.stButton > button:hover {
+        background: transparent !important;
+        border: none !important;
+    }
+    div.stButton > button:active {
+        background: transparent !important;
+        border: none !important;
+    }
+    
+    /* تصميم مظهر البطاقات الجانبية */
     .control-card {
         border: 1px solid #e2e8f0;
         border-radius: 8px;
@@ -29,17 +49,14 @@ st.markdown("""
         margin-bottom: 12px;
         background-color: #ffffff;
         box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        cursor: pointer;
-        transition: border-color 0.2s, background-color 0.2s, transform 0.1s;
+        transition: border-color 0.2s, background-color 0.2s;
         width: 100%;
         box-sizing: border-box;
     }
     .control-card:hover {
         border-color: #1687d9;
         background-color: #f8fafc;
-        transform: translateY(-1px);
     }
-    /* مظهر البطاقة عند تفعيلها واختيارها */
     .control-card-active {
         border: 2px solid #1687d9;
         background-color: #f0fdf4;
@@ -55,6 +72,7 @@ st.markdown("""
         color: #64748b;
         line-height: 1.4;
         margin-bottom: 6px;
+        white-space: normal;
     }
     .card-footer {
         font-size: 12px;
@@ -65,7 +83,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------
-# وظائف معالجة البيانات واستخراج الروابط
+# وظائف معالجة البيانات
 # -------------------------
 def get_mapping_columns(i):
     suffix = "" if i == 1 else f" {i}"
@@ -125,13 +143,13 @@ def create_graph(selected_id, source_text, mappings):
     }
     """)
     
-    # تأكيد بقاء الدائرة المركزية الزرقاء بحجمها الضخم والمثالي (160) للتناسق التام
+    # تكبير الدائرة المركزية الزرقاء بشكل ضخم وبارز جداً وضبط أبعاد الخط بداخلها
     net.add_node(
         selected_id, 
         label=selected_id, 
         title=html.escape(source_text), 
         color="#1687d9", 
-        size=200, 
+        size=160,  # تم التكبير بشكل ملحوظ بناءً على طلبك لتبدو ضخمة ومتناسقة
         shape="circle", 
         font={'color': 'white', 'size': 32, 'bold': True}
     )
@@ -170,7 +188,7 @@ def create_graph(selected_id, source_text, mappings):
         return open(tmp.name, 'r', encoding='utf-8').read()
 
 # -------------------------
-# الواجهة الرئيسية وتصميم القائمة الجانبية التفاعلية
+# الواجهة الرئيسية وتصميم القائمة الجانبية المتقدم
 # -------------------------
 DATA_FILE = "final_ontology_refined_mappings_with_explanations.csv"
 
@@ -189,7 +207,7 @@ if os.path.exists(DATA_FILE):
     
     st.sidebar.markdown("### Controls")
     
-    # إدارة حالة العنصر النشط
+    # إدارة تهيئة وتحديث العنصر النشط في الواجهة
     if "selected_control_id" not in st.session_state and len(filtered_controls) > 0:
         st.session_state.selected_control_id = filtered_controls[0]
     elif len(filtered_controls) > 0 and st.session_state.selected_control_id not in filtered_controls:
@@ -204,39 +222,24 @@ if os.path.exists(DATA_FILE):
             is_active = (str(ctrl_id) == str(st.session_state.selected_control_id))
             card_class = "control-card control-card-active" if is_active else "control-card"
             
-            # حقن جافاسكريبت تفاعلي مع الـ HTML للتحكم بالاختيار فورا عند الضغط على مربع البطاقة
-            # هذه الطريقة تقضي تماماً على ظهور أي عبارات أو نصوص زائدة مشوهة للمظهر
-            card_html = f"""
-            <div class="{card_class}" onclick="window.parent.postMessage({{type: 'streamlit:setComponentValue', value: '{ctrl_id}'}}, '*')">
-                <div class="card-id">{ctrl_id}</div>
-                <div class="card-text">{short_text}</div>
-                <div class="card-footer">10 recommended mappings</div>
-            </div>
-            """
-            
-            # عرض البطاقة النظيفة بالكامل والتقاط القيمة بشكل فوري ومباشر
+            # حيلة هندسية ذكية: نغلف البطاقة بالكامل داخل زر شفاف ممتد العرض 
+            # ليتم التقاط النقرة على البطاقة الجانبية مباشرة دون الحاجة لزر مخصص
             with st.sidebar:
-                # استخدام حقل مدمج لالتقاط الاستماع من الـ HTML المخصص بأمان كامل وبدون ظهور أزرار
-                if components.html(f"""
-                    <script>
-                    function selectCard() {{
-                        window.parent.document.querySelector('button[key="trigger_{ctrl_id}"]').click();
-                    }}
-                    </script>
-                    <div style="margin-bottom: -10px;">
-                        {card_html}
-                    </div>
-                """, height=140 if len(short_text) > 60 else 110):
-                    pass
-                
-                # تحديث مستقر ومباشر للـ Session State
-                if st.button(label="", key=f"trigger_{ctrl_id}", help="", use_container_width=True):
+                if st.button(label=f"hidden_click_{ctrl_id}", key=f"btn_{ctrl_id}"):
                     st.session_state.selected_control_id = ctrl_id
                     st.rerun()
+                
+                # طباعة المظهر الفعلي للبطاقة ليتلقى المظهر النشط
+                st.markdown(f"""
+                <div class="{card_class}" style="margin-top: -38px; pointer-events: none;">
+                    <div class="card-id">{ctrl_id}</div>
+                    <div class="card-text">{short_text}</div>
+                    <div class="card-footer">10 recommended mappings</div>
+                </div>
+                """, unsafe_allow_html=True)
     else:
         st.sidebar.info("No matching controls found.")
     
-    # عرض محتوى الضابط المختار في الواجهة الرئيسية
     if "selected_control_id" in st.session_state and len(filtered_controls) > 0:
         selected_id = st.session_state.selected_control_id
         st.title("Control Mapping Viewer")
@@ -244,7 +247,7 @@ if os.path.exists(DATA_FILE):
         row = df[df["ECC id control"].astype(str) == str(selected_id)].iloc[0]
         mappings = extract_mappings(row, df)
 
-        # رسم وعرض مخطط النودز المكبر الاحترافي
+        # توليد وعرض الرسم البياني مع الدائرة الكبيرة الجديدة
         graph_html = create_graph(str(selected_id), str(row["Source Text"]), mappings)
         components.html(graph_html, height=680)
 
