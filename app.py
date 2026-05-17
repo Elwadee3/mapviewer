@@ -164,7 +164,7 @@ def create_graph(selected_id, source_text, mappings):
         },
         shape="circle",
         size=150 )
-    )
+
 
 
     for idx, item in enumerate(mappings):
