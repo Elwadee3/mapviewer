@@ -155,7 +155,7 @@ def create_graph(selected_id, source_text, mappings):
         color="#1687d9", 
         size=1000, 
         shape="circle", 
-        font={'color': 'white', 'size': 28, 'bold': True}
+        font={'color': 'white', 'size': 40, 'bold': True}
     )
 
     for idx, item in enumerate(mappings):
