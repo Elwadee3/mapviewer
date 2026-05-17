@@ -162,6 +162,12 @@ div.stButton > button:hover {
 </style>
 """, unsafe_allow_html=True)
 
+# -------------------------
+# HELPERS 
+# -------------------------
+def short_text(text, limit=150):
+    text = str(text)
+    return text if len(text) <= limit else text[:limit] + "..."
 
 # -------------------------
 # وظائف معالجة البيانات
