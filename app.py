@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # -------------------------
-# تحسين المظهر باستخدام CSS المطور للبطاقات القابلة للضغط مباشرة
+# تحسين المظهر باستخدام CSS المطور للبطاقات الجانبية
 # -------------------------
 st.markdown("""
 <style>
@@ -25,7 +25,7 @@ st.markdown("""
         padding: 8px;
     }
     
-    /* إلغاء الهوامش المزعجة لأزرار المكونات الشفافة */
+    /* إلغاء الهوامش والمظهر الافتراضي لأزرار Streamlit في القائمة الجانبية */
     div[data-testid="stSidebar"] div.stButton > button {
         border: none !important;
         background: transparent !important;
@@ -45,7 +45,7 @@ st.markdown("""
         border: none !important;
     }
     
-    /* تصميم مظهر البطاقات الجانبية */
+    /* تصميم مظهر البطاقات الجانبية النظيفة */
     .control-card {
         border: 1px solid #e2e8f0;
         border-radius: 8px;
@@ -87,7 +87,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------
-# وظائف معالجة البيانات
+# وظائف معالجة البيانات واستخراج العناصر
 # -------------------------
 def get_mapping_columns(i):
     suffix = "" if i == 1 else f" {i}"
@@ -134,8 +134,10 @@ def create_graph(selected_id, source_text, mappings):
     net = Network(height="650px", width="100%", bgcolor="#ffffff")
     dark_blue = "#1e3a8a"
 
+    # تفعيل خيار تفاعل الـ HTML داخل الـ Tooltip ليعمل التنسيق بشكل صحيح ونظيف
     net.set_options("""
     {
+      "interaction": { "hover": true },
       "physics": {
         "forceAtlas2Based": { "gravitationalConstant": -180, "springLength": 260 },
         "solver": "forceAtlas2Based", "stabilization": { "iterations": 1000 }
@@ -147,40 +149,45 @@ def create_graph(selected_id, source_text, mappings):
     }
     """)
     
-    # ضبط الدائرة المركزية الزرقاء بشكل ضخم وبارز
-     net.add_node(
+    # تنسيق الـ Tooltip للنود المركزية
+    clean_source_text = html.escape(source_text)
+    source_tooltip = f"<b>Control ID:</b> {selected_id}<br><b>Description:</b> {clean_source_text}"
+
+    # إضافة الدائرة المركزية الزرقاء بشكلها الضخم والمميز
+    net.add_node(
         selected_id, 
         label=selected_id, 
-        title=html.escape(source_text), 
+        title=source_tooltip, 
         color="#1687d9", 
-        size=200, 
+        size=90, 
         shape="circle", 
-        font={'color': 'white', 'size': 28, 'bold': True} 
-     )
-
-
+        font={'color': 'white', 'size': 26, 'bold': True}
+    )
 
     for idx, item in enumerate(mappings):
         edge_width = max(1, 10 - idx)
         
-        # صياغة الـ Tooltip المنبثق ليكون نظيفاً ومقروءاً بدون وسوم داخلية
+        # بناء الـ Tooltip المنبثق باستخدام وسوم HTML حقيقية ليعرض بشكل منسق وجذاب
         hover_info = (
-            f"Mapping: {item['mapping']}\n"
-            f"Commonality: {item['commonality']}\n"
-            f"Justification: {item['justification']}\n"
-            f"Differences: {item['differences']}"
+            f"<b>Mapping:</b> {html.escape(item['mapping'])}<br>"
+            f"<b>Commonality:</b> {html.escape(item['commonality'])}<br>"
+            f"<b>Justification:</b> {html.escape(item['justification'])}<br>"
+            f"<b>Differences:</b> {html.escape(item['differences'])}"
         )
         
+        # نود الضوابط الفرعية (الخضراء)
+        node_tooltip = f"<b>Text:</b> {html.escape(item['text'])}"
         net.add_node(
             item["mapping"], 
             label=item["mapping"], 
-            title=html.escape(item["text"]), 
+            title=node_tooltip, 
             color="#328a36", 
             size=35, 
             shape="circle", 
             font={'color': 'white', 'size': 16}
         )
         
+        # إضافة الرابط (Edge) مع تمرير تفاصيل المقارنة داخله
         net.add_edge(
             selected_id, 
             item["mapping"], 
@@ -195,7 +202,7 @@ def create_graph(selected_id, source_text, mappings):
         return open(tmp.name, 'r', encoding='utf-8').read()
 
 # -------------------------
-# الواجهة الرئيسية وتصميم القائمة الجانبية المتقدم
+# الواجهة الرئيسية وهيكل الـ Sidebar
 # -------------------------
 DATA_FILE = "final_ontology_refined_mappings_with_explanations.csv"
 
@@ -214,7 +221,7 @@ if os.path.exists(DATA_FILE):
     
     st.sidebar.markdown("### Controls")
     
-    # إدارة تهيئة وتحديث العنصر النشط في الواجهة
+    # إدارة وضبط حالة الكنترول النشط في الـ Session State
     if "selected_control_id" not in st.session_state and len(filtered_controls) > 0:
         st.session_state.selected_control_id = str(filtered_controls[0])
     elif len(filtered_controls) > 0 and st.session_state.selected_control_id not in [str(c) for c in filtered_controls]:
@@ -231,12 +238,12 @@ if os.path.exists(DATA_FILE):
             card_class = "control-card control-card-active" if is_active else "control-card"
             
             with st.sidebar:
-                # لتفادي التكرار وجعل مساحة الزر الشفاف تغطي كامل مساحة البطاقة
+                # توليد الزر الشفاف الذي يغطي البطاقة بالكامل بشكل نظيف بدون تكرار
                 if st.button(label="", key=f"btn_nav_{str_ctrl_id}"):
                     st.session_state.selected_control_id = str_ctrl_id
                     st.rerun()
                 
-                # طباعة المظهر الفعلي للبطاقة ليتلقى المظهر النشط
+                # إظهار تصميم البطاقة الأنيق تحت الزر مباشرة بشكل متطابق
                 st.markdown(f"""
                 <div class="{card_class}" style="margin-top: -25px; pointer-events: none; position: relative; z-index: 1;">
                     <div class="card-id">{str_ctrl_id}</div>
@@ -247,6 +254,9 @@ if os.path.exists(DATA_FILE):
     else:
         st.sidebar.info("No matching controls found.")
     
+    # -------------------------
+    # منطقة العرض الرئيسية والرسم البياني
+    # -------------------------
     if "selected_control_id" in st.session_state and len(filtered_controls) > 0:
         selected_id = st.session_state.selected_control_id
         st.title("Control Mapping Viewer")
@@ -254,7 +264,7 @@ if os.path.exists(DATA_FILE):
         row = df[df["ECC id control"].astype(str) == str(selected_id)].iloc[0]
         mappings = extract_mappings(row, df)
 
-        # توليد وعرض الرسم البياني
+        # توليد وعرض رسم Pyvis البياني المطور
         graph_html = create_graph(str(selected_id), str(row["Source Text"]), mappings)
         components.html(graph_html, height=680)
 
