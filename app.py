@@ -121,13 +121,13 @@ def create_graph(selected_id, source_text, mappings):
     }
     """)
     
-    # تكبير الدائرة الزرقاء المركزية بشكل ملحوظ وضبط حجم الخط بداخلها
+    # تثبيت تكبير الحجم للدائرة المركزية الزرقاء (110) لضمان التناسق البصري
     net.add_node(
         selected_id, 
         label=selected_id, 
         title=html.escape(source_text), 
         color="#1687d9", 
-        size=110,  # تم تكبير الحجم مرة أخرى إلى 110 بناءً على طلبك
+        size=110, 
         shape="circle", 
         font={'color': 'white', 'size': 28, 'bold': True}
     )
@@ -135,6 +135,7 @@ def create_graph(selected_id, source_text, mappings):
     for idx, item in enumerate(mappings):
         edge_width = max(1, 10 - idx)
         
+        # تنسيق النص للمتصفحات بدون إظهار أكواد التنسيق الخام
         hover_info = (
             f"Mapping: {item['mapping']}\n"
             f"Commonality: {item['commonality']}\n"
@@ -174,6 +175,66 @@ if os.path.exists(DATA_FILE):
     df = pd.read_csv(DATA_FILE)
     df.columns = [c.strip() for c in df.columns]
     
-    # شريط البحث الجانبي والبطاقات
     st.sidebar.title("Controls List")
-    search_query = st.sidebar.text_input("Search by control number (e.g., 2.4)", placeholder="Type
+    
+    # إصلاح السطر المسبب للمشكلة بالكامل هنا ليعمل بأمان
+    search_query = st.sidebar.text_input("Search by control number (e.g., 2.4)", placeholder="Type to filter...")
+    
+    unique_controls = df["ECC id control"].unique()
+    if search_query:
+        filtered_controls = [c for c in unique_controls if search_query.strip() in str(c)]
+    else:
+        filtered_controls = list(unique_controls)
+    
+    st.sidebar.markdown("### Controls")
+    
+    if "selected_control_id" not in st.session_state and len(filtered_controls) > 0:
+        st.session_state.selected_control_id = filtered_controls[0]
+    elif len(filtered_controls) > 0 and st.session_state.selected_control_id not in filtered_controls:
+        st.session_state.selected_control_id = filtered_controls[0]
+
+    if filtered_controls:
+        for ctrl_id in filtered_controls:
+            ctrl_row = df[df["ECC id control"].astype(str) == str(ctrl_id)].iloc[0]
+            ctrl_text = str(ctrl_row.get("Source Text", ""))
+            short_text = ctrl_text if len(ctrl_text) < 120 else ctrl_text[:120] + "..."
+            
+            is_active = (str(ctrl_id) == str(st.session_state.selected_control_id))
+            card_class = "control-card control-card-active" if is_active else "control-card"
+            
+            st.sidebar.markdown(f"""
+            <div class="{card_class}">
+                <div class="card-id">{ctrl_id}</div>
+                <div class="card-text">{short_text}</div>
+                <div class="card-footer">10 recommended mappings</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.sidebar.button(f"Select {ctrl_id}", key=f"btn_{ctrl_id}", use_container_width=True):
+                st.session_state.selected_control_id = ctrl_id
+                st.rerun()
+    else:
+        st.sidebar.info("No matching controls found.")
+    
+    if "selected_control_id" in st.session_state and len(filtered_controls) > 0:
+        selected_id = st.session_state.selected_control_id
+        st.title("Control Mapping Viewer")
+        
+        row = df[df["ECC id control"].astype(str) == str(selected_id)].iloc[0]
+        mappings = extract_mappings(row, df)
+
+        graph_html = create_graph(str(selected_id), str(row["Source Text"]), mappings)
+        components.html(graph_html, height=680)
+
+        st.markdown("## AI Explanations")
+        if mappings:
+            for idx, m in enumerate(mappings):
+                with st.expander(f"#{idx+1} - {m['mapping']}"):
+                    st.markdown(f"**Commonality:** {m['commonality']}")
+                    st.markdown(f"**Justification:** {m['justification']}")
+                    st.markdown(f"**Differences:** {m['differences']}")
+                    st.divider()
+        else:
+            st.info("No mappings found for this control.")
+else:
+    st.error("Data file not found. Please ensure the CSV is in the same directory.")
