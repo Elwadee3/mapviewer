@@ -149,7 +149,7 @@ def create_graph(selected_id, source_text, mappings):
         label=selected_id, 
         title=html.escape(source_text), 
         color="#1687d9", 
-        size=160,  # تم التكبير بشكل ملحوظ بناءً على طلبك لتبدو ضخمة ومتناسقة
+        size=250,  # تم التكبير بشكل ملحوظ بناءً على طلبك لتبدو ضخمة ومتناسقة
         shape="circle", 
         font={'color': 'white', 'size': 32, 'bold': True}
     )
