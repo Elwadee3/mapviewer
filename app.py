@@ -153,7 +153,7 @@ def create_graph(selected_id, source_text, mappings):
         label=selected_id, 
         title=html.escape(source_text), 
         color="#1687d9", 
-        size=200, 
+        size=500, 
         shape="circle", 
         font={'color': 'white', 'size': 28, 'bold': True}
     )
