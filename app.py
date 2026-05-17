@@ -1,4 +1,4 @@
-iimport streamlit as st
+import streamlit as st
 import pandas as pd
 from pyvis.network import Network
 import streamlit.components.v1 as components
