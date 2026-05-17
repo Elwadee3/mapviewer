@@ -156,7 +156,7 @@ def create_graph(selected_id, source_text, mappings):
     # إضافة الدائرة المركزية الزرقاء بشكلها الضخم والمميز
     net.add_node(
         selected_id, 
-        label=selected_id, 
+        label="", 
         title=source_tooltip, 
         color="#1687d9", 
         size=300, 
