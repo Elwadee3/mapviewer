@@ -6,173 +6,81 @@ import tempfile
 import html
 import os
 
-st.set_page_config(
-    page_title="Control Mapping Viewer",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# إعداد الصفحة
+st.set_page_config(page_title="Control Mapping Viewer", layout="wide")
 
 # -------------------------
-# CSS STYLE 
+# تحسين المظهر باستخدام CSS المطور للبطاقات القابلة للضغط مباشرة
 # -------------------------
 st.markdown("""
 <style>
-body {
-    background-color: #f5f5f5;
-}
-
-.block-container {
-    padding-top: 2rem;
-    padding-left: 2rem;
-    padding-right: 1rem;
-}
-
-[data-testid="stSidebar"] {
-    min-width: 430px;
-    max-width: 430px;
-}
-
-div[data-baseweb="select"] {
-    font-size: 14px;
-}
-
-[data-testid="stSidebar"] {
-    background-color: #ffffff;
-    border-right: 1px solid #ddd;
-}
-
-.main-title {
-    font-size: 64px;
-    font-weight: 800;
-    color: #2f2f2f;
-    margin-bottom: 0;
-}
-
-.subtitle {
-    font-size: 22px;
-    color: #111827;
-    margin-top: -8px;
-}
-
-.sidebar-title {
-    font-size: 22px;
-    font-weight: 800;
-    color: #1f2937;
-    margin-bottom: 12px;
-}
-
-.control-card {
-    padding: 18px;
-    border-radius: 0px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-}
-
-.control-card-selected {
-    background-color: #dff0ff;
-    padding: 18px;
-    border-radius: 0px;
-    border-bottom: 1px solid #eee;
-}
-
-.control-id {
-    font-size: 24px;
-    font-weight: 800;
-    color: #1476d4;
-}
-
-.control-text {
-    font-size: 18px;
-    color: #666;
-    line-height: 1.35;
-}
-
-.small-muted {
-    color: #8a8a8a;
-    font-size: 16px;
-}
-
-.mapping-card {
-    border: 2px solid #75b843;
-    border-radius: 6px;
-    background-color: #f1faec;
-    padding: 14px;
-    margin-bottom: 14px;
-}
-
-.mapping-title {
-    font-size: 20px;
-    font-weight: 800;
-    color: #1476d4;
-}
-
-.rank-pill {
-    background-color: #1476d4;
-    color: white;
-    border-radius: 18px;
-    padding: 5px 10px;
-    font-weight: 700;
-    margin-right: 10px;
-}
-
-.score-line {
-    float: right;
-    font-size: 14px;
-    font-weight: 800;
-}
-
-.score-green {
-    color: #00a13a;
-}
-
-.score-purple {
-    color: #7b2cff;
-}
-
-.score-blue {
-    color: #005cff;
-}
-
-.mapping-text {
-    clear: both;
-    color: #555;
-    font-size: 15px;
-    line-height: 1.5;
-    margin-top: 12px;
-}
-
-.graph-box {
-    border: 1px solid #d8d8d8;
-    background-color: white;
-    border-radius: 5px;
-    padding: 0px;
-}
-
-div.stButton > button {
-    width: 100%;
-    text-align: left;
-    border-radius: 0;
-    border: none;
-    background-color: white;
-    color: #444;
-    padding: 16px;
-}
-
-div.stButton > button:hover {
-    background-color: #dff0ff;
-    color: #1476d4;
-}
+    /* تخصيص صندوق البحث الجانبي */
+    div[data-testid="stSidebar"] .stTextInput input {
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        padding: 8px;
+    }
+    
+    /* إلغاء الهوامش المزعجة لأزرار المكونات الشفافة */
+    div.stButton > button {
+        border: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        text-align: left !important;
+        box-shadow: none !important;
+    }
+    div.stButton > button:hover {
+        background: transparent !important;
+        border: none !important;
+    }
+    div.stButton > button:active {
+        background: transparent !important;
+        border: none !important;
+    }
+    
+    /* تصميم مظهر البطاقات الجانبية */
+    .control-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 12px;
+        background-color: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        transition: border-color 0.2s, background-color 0.2s;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .control-card:hover {
+        border-color: #1687d9;
+        background-color: #f8fafc;
+    }
+    .control-card-active {
+        border: 2px solid #1687d9;
+        background-color: #f0fdf4;
+    }
+    .card-id {
+        font-weight: bold;
+        color: #1e293b;
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+    .card-text {
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.4;
+        margin-bottom: 6px;
+        white-space: normal;
+    }
+    .card-footer {
+        font-size: 12px;
+        color: #475569;
+        font-weight: 500;
+    }
 </style>
 """, unsafe_allow_html=True)
-
-
-# -------------------------
-# HELPERS 
-# -------------------------
-def short_text(text, limit=150):
-    text = str(text)
-    return text if len(text) <= limit else text[:limit] + "..."
-
 
 # -------------------------
 # وظائف معالجة البيانات
