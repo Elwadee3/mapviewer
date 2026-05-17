@@ -149,21 +149,14 @@ def create_graph(selected_id, source_text, mappings):
     
     # ضبط الدائرة المركزية الزرقاء بشكل ضخم وبارز
      net.add_node(
-        selected_control,
-        label=selected_control,
-        title=html.escape(source_text),
-        color={
-            "background": "#1687d9",
-            "border": "#0b4f8a"
-        },
-        font={
-            "color": "#ffffff",
-            "size": 50,
-            "face": "arial",
-            "bold": True
-        },
-        shape="circle",
-        size=150 )
+        selected_id, 
+        label=selected_id, 
+        title=html.escape(source_text), 
+        color="#1687d9", 
+        size=200, 
+        shape="circle", 
+        font={'color': 'white', 'size': 28, 'bold': True} 
+     )
 
 
 
