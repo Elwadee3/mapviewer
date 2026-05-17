@@ -159,7 +159,7 @@ def create_graph(selected_id, source_text, mappings):
         label=selected_id, 
         title=source_tooltip, 
         color="#1687d9", 
-        size=90, 
+        size=300, 
         shape="circle", 
         font={'color': 'white', 'size': 26, 'bold': True}
     )
