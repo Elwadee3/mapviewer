@@ -10,6 +10,57 @@ import os
 st.set_page_config(page_title="Control Mapping Viewer", layout="wide")
 
 # -------------------------
+# تحسين المظهر باستخدام CSS (البطاقات الجانبية وصندوق البحث)
+# -------------------------
+st.markdown("""
+<style>
+    /* تخصيص صندوق البحث */
+    div[data-testid="stSidebar"] .stTextInput input {
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        padding: 8px;
+    }
+    
+    /* تصميم البطاقات الجانبية */
+    .control-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        background-color: #ffffff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        cursor: pointer;
+        transition: transform 0.2s, border-color 0.2s;
+    }
+    .control-card:hover {
+        border-color: #1687d9;
+        transform: translateY(-2px);
+    }
+    .control-card-active {
+        border: 2px solid #1687d9;
+        background-color: #f0fdf4;
+    }
+    .card-id {
+        font-weight: bold;
+        color: #334155;
+        font-size: 15px;
+        margin-bottom: 4px;
+    }
+    .card-text {
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.4;
+        margin-bottom: 6px;
+    }
+    .card-footer {
+        font-size: 12px;
+        color: #475569;
+        font-weight: 500;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# -------------------------
 # وظائف معالجة البيانات
 # -------------------------
 def get_mapping_columns(i):
@@ -37,8 +88,8 @@ def extract_mappings(row, df, top_k=10):
         
         commonality_val = row.get(cols["commonality"], "")
         justification_val = row.get(cols["justification"], "")
-        
         differences_val = row.get(cols["differences"], "")
+        
         if pd.isna(differences_val) or differences_val == "":
             differences_val = "The controls differ in implementation focus and specific requirements."
         
@@ -55,14 +106,12 @@ def extract_mappings(row, df, top_k=10):
 
 def create_graph(selected_id, source_text, mappings):
     net = Network(height="650px", width="100%", bgcolor="#ffffff")
-    
-    # اللون الأزرق الغامق المعتمد للأرقام والروابط
     dark_blue = "#1e3a8a"
 
     net.set_options("""
     {
       "physics": {
-        "forceAtlas2Based": { "gravitationalConstant": -120, "springLength": 220 },
+        "forceAtlas2Based": { "gravitationalConstant": -150, "springLength": 240 },
         "solver": "forceAtlas2Based", "stabilization": { "iterations": 1000 }
       },
       "nodes": { "font": { "size": 18, "face": "arial" }, "borderWidth": 2 },
@@ -72,21 +121,20 @@ def create_graph(selected_id, source_text, mappings):
     }
     """)
     
-    # 1. تكبير الدائرة الزرقاء المركزية وإظهار الكود بداخلها بشكل واضح
+    # تكبير الدائرة الزرقاء المركزية بشكل ملحوظ وضبط حجم الخط بداخلها
     net.add_node(
         selected_id, 
         label=selected_id, 
         title=html.escape(source_text), 
         color="#1687d9", 
-        size=75,  # تم تكبير الحجم من 45 إلى 75
+        size=110,  # تم تكبير الحجم مرة أخرى إلى 110 بناءً على طلبك
         shape="circle", 
-        font={'color': 'white', 'size': 22, 'bold': True}
+        font={'color': 'white', 'size': 28, 'bold': True}
     )
 
     for idx, item in enumerate(mappings):
         edge_width = max(1, 10 - idx)
         
-        # تجهيز نص الـ Tooltip النظيف والمنظم بدون كود <b> يظهر للمستخدم
         hover_info = (
             f"Mapping: {item['mapping']}\n"
             f"Commonality: {item['commonality']}\n"
@@ -104,7 +152,6 @@ def create_graph(selected_id, source_text, mappings):
             font={'color': 'white', 'size': 16}
         )
         
-        # ربط النود مع عرض الرقم عريضاً بالأزرق الغامق
         net.add_edge(
             selected_id, 
             item["mapping"], 
@@ -119,7 +166,7 @@ def create_graph(selected_id, source_text, mappings):
         return open(tmp.name, 'r', encoding='utf-8').read()
 
 # -------------------------
-# الواجهة الرئيسية
+# الواجهة الرئيسية وتصميم القائمة الجانبية المتقدم
 # -------------------------
 DATA_FILE = "final_ontology_refined_mappings_with_explanations.csv"
 
@@ -127,35 +174,6 @@ if os.path.exists(DATA_FILE):
     df = pd.read_csv(DATA_FILE)
     df.columns = [c.strip() for c in df.columns]
     
-    # 2. القائمة الجانبية تظهر العناصر تحت بعضها مباشرة باستخدام radio
+    # شريط البحث الجانبي والبطاقات
     st.sidebar.title("Controls List")
-    selected_id = st.sidebar.radio(
-        "Select Control ID:", 
-        options=df["ECC id control"].unique(),
-        index=0
-    )
-    
-    st.title("Control Mapping Viewer")
-    
-    row = df[df["ECC id control"].astype(str) == str(selected_id)].iloc[0]
-    mappings = extract_mappings(row, df)
-
-    # عرض الرسم البياني
-    graph_html = create_graph(str(selected_id), str(row["Source Text"]), mappings)
-    components.html(graph_html, height=680)
-
-    # عرض التفسيرات في الأسفل
-    st.markdown("## AI Explanations")
-    
-    if mappings:
-        for idx, m in enumerate(mappings):
-            with st.expander(f"#{idx+1} - {m['mapping']}"):
-                st.markdown(f"**Commonality:** {m['commonality']}")
-                st.markdown(f"**Justification:** {m['justification']}")
-                st.markdown(f"**Differences:** {m['differences']}")
-                st.divider()
-    else:
-        st.info("No mappings found for this control.")
-
-else:
-    st.error("Data file not found. Please ensure the CSV is in the same directory.")
+    search_query = st.sidebar.text_input("Search by control number (e.g., 2.4)", placeholder="Type
