@@ -222,6 +222,21 @@ if os.path.exists(DATA_FILE):
             is_active = (str(ctrl_id) == str(st.session_state.selected_control_id))
             card_class = "control-card control-card-active" if is_active else "control-card"
             
+            with st.sidebar:
+                # 1. تم تفريغ الـ label تماماً لمنع ظهور أي نصوص مخفية في الأعلى
+                if st.button(label="", key=f"btn_{ctrl_id}"):
+                    st.session_state.selected_control_id = ctrl_id
+                    st.rerun()
+                
+                # 2. عرض جسم البطاقة النظيف، وتم ضبط الهامش العلوي (margin-top) ليتطابق بسلاسة
+                st.markdown(f"""
+                <div class="{card_class}" style="margin-top: -24px; pointer-events: none; position: relative; z-index: 1;">
+                    <div class="card-id">{ctrl_id}</div>
+                    <div class="card-text">{short_text}</div>
+                    <div class="card-footer">10 recommended mappings</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
             # حيلة هندسية ذكية: نغلف البطاقة بالكامل داخل زر شفاف ممتد العرض 
             # ليتم التقاط النقرة على البطاقة الجانبية مباشرة دون الحاجة لزر مخصص
             with st.sidebar:
