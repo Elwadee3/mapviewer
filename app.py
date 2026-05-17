@@ -163,8 +163,9 @@ def create_graph(selected_id, source_text, mappings):
             "bold": True
         },
         shape="circle",
-        size=150
+        size=150 )
     )
+
 
     for idx, item in enumerate(mappings):
         edge_width = max(1, 10 - idx)
