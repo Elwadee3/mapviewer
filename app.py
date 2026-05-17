@@ -6,11 +6,14 @@ import tempfile
 import html
 import os
 
-# إعداد الصفحة
-st.set_page_config(page_title="Control Mapping Viewer", layout="wide")
+st.set_page_config(
+    page_title="Control Mapping Viewer",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # -------------------------
-# تحسين المظهر باستخدام CSS المطور للبطاقات القابلة للضغط مباشرة
+# CSS STYLE 
 # -------------------------
 st.markdown("""
 <style>
