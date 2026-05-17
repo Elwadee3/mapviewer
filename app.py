@@ -7,7 +7,11 @@ import html
 import os
 
 # إعداد الصفحة
-st.set_page_config(page_title="Control Mapping Viewer", layout="wide")
+st.set_page_config(
+    page_title="Control Mapping Viewer", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # -------------------------
 # تحسين المظهر باستخدام CSS المطور للبطاقات القابلة للضغط مباشرة
@@ -22,7 +26,7 @@ st.markdown("""
     }
     
     /* إلغاء الهوامش المزعجة لأزرار المكونات الشفافة */
-    div.stButton > button {
+    div[data-testid="stSidebar"] div.stButton > button {
         border: none !important;
         background: transparent !important;
         padding: 0 !important;
@@ -32,11 +36,11 @@ st.markdown("""
         text-align: left !important;
         box-shadow: none !important;
     }
-    div.stButton > button:hover {
+    div[data-testid="stSidebar"] div.stButton > button:hover {
         background: transparent !important;
         border: none !important;
     }
-    div.stButton > button:active {
+    div[data-testid="stSidebar"] div.stButton > button:active {
         background: transparent !important;
         border: none !important;
     }
@@ -143,20 +147,21 @@ def create_graph(selected_id, source_text, mappings):
     }
     """)
     
-    # تكبير الدائرة المركزية الزرقاء بشكل ضخم وبارز جداً وضبط أبعاد الخط بداخلها
+    # ضبط الدائرة المركزية الزرقاء بشكل ضخم وبارز
     net.add_node(
         selected_id, 
         label=selected_id, 
         title=html.escape(source_text), 
         color="#1687d9", 
-        size=160,  # تم التكبير بشكل ملحوظ بناءً على طلبك لتبدو ضخمة ومتناسقة
+        size=100, 
         shape="circle", 
-        font={'color': 'white', 'size': 32, 'bold': True}
+        font={'color': 'white', 'size': 28, 'bold': True}
     )
 
     for idx, item in enumerate(mappings):
         edge_width = max(1, 10 - idx)
         
+        # صياغة الـ Tooltip المنبثق ليكون نظيفاً ومقروءاً بدون وسوم داخلية
         hover_info = (
             f"Mapping: {item['mapping']}\n"
             f"Commonality: {item['commonality']}\n"
@@ -199,7 +204,7 @@ if os.path.exists(DATA_FILE):
     st.sidebar.title("Controls List")
     search_query = st.sidebar.text_input("Search by control number (e.g., 2.4)", placeholder="Type to filter...")
     
-    unique_controls = df["ECC id control"].unique()
+    unique_controls = df["ECC id control"].dropna().unique()
     if search_query:
         filtered_controls = [c for c in unique_controls if search_query.strip() in str(c)]
     else:
@@ -209,45 +214,30 @@ if os.path.exists(DATA_FILE):
     
     # إدارة تهيئة وتحديث العنصر النشط في الواجهة
     if "selected_control_id" not in st.session_state and len(filtered_controls) > 0:
-        st.session_state.selected_control_id = filtered_controls[0]
-    elif len(filtered_controls) > 0 and st.session_state.selected_control_id not in filtered_controls:
-        st.session_state.selected_control_id = filtered_controls[0]
+        st.session_state.selected_control_id = str(filtered_controls[0])
+    elif len(filtered_controls) > 0 and st.session_state.selected_control_id not in [str(c) for c in filtered_controls]:
+        st.session_state.selected_control_id = str(filtered_controls[0])
 
     if filtered_controls:
         for ctrl_id in filtered_controls:
-            ctrl_row = df[df["ECC id control"].astype(str) == str(ctrl_id)].iloc[0]
+            str_ctrl_id = str(ctrl_id)
+            ctrl_row = df[df["ECC id control"].astype(str) == str_ctrl_id].iloc[0]
             ctrl_text = str(ctrl_row.get("Source Text", ""))
             short_text = ctrl_text if len(ctrl_text) < 120 else ctrl_text[:120] + "..."
             
-            is_active = (str(ctrl_id) == str(st.session_state.selected_control_id))
+            is_active = (str_ctrl_id == str(st.session_state.selected_control_id))
             card_class = "control-card control-card-active" if is_active else "control-card"
             
             with st.sidebar:
-                # 1. تم تفريغ الـ label تماماً لمنع ظهور أي نصوص مخفية في الأعلى
-                if st.button(label="", key=f"btn_{ctrl_id}"):
-                    st.session_state.selected_control_id = ctrl_id
-                    st.rerun()
-                
-                # 2. عرض جسم البطاقة النظيف، وتم ضبط الهامش العلوي (margin-top) ليتطابق بسلاسة
-                st.markdown(f"""
-                <div class="{card_class}" style="margin-top: -24px; pointer-events: none; position: relative; z-index: 1;">
-                    <div class="card-id">{ctrl_id}</div>
-                    <div class="card-text">{short_text}</div>
-                    <div class="card-footer">10 recommended mappings</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            # حيلة هندسية ذكية: نغلف البطاقة بالكامل داخل زر شفاف ممتد العرض 
-            # ليتم التقاط النقرة على البطاقة الجانبية مباشرة دون الحاجة لزر مخصص
-            with st.sidebar:
-                if st.button(label=f"hidden_click_{ctrl_id}", key=f"btn_{ctrl_id}"):
-                    st.session_state.selected_control_id = ctrl_id
+                # لتفادي التكرار وجعل مساحة الزر الشفاف تغطي كامل مساحة البطاقة
+                if st.button(label="", key=f"btn_nav_{str_ctrl_id}"):
+                    st.session_state.selected_control_id = str_ctrl_id
                     st.rerun()
                 
                 # طباعة المظهر الفعلي للبطاقة ليتلقى المظهر النشط
                 st.markdown(f"""
-                <div class="{card_class}" style="margin-top: -38px; pointer-events: none;">
-                    <div class="card-id">{ctrl_id}</div>
+                <div class="{card_class}" style="margin-top: -25px; pointer-events: none; position: relative; z-index: 1;">
+                    <div class="card-id">{str_ctrl_id}</div>
                     <div class="card-text">{short_text}</div>
                     <div class="card-footer">10 recommended mappings</div>
                 </div>
@@ -262,7 +252,7 @@ if os.path.exists(DATA_FILE):
         row = df[df["ECC id control"].astype(str) == str(selected_id)].iloc[0]
         mappings = extract_mappings(row, df)
 
-        # توليد وعرض الرسم البياني مع الدائرة الكبيرة الجديدة
+        # توليد وعرض الرسم البياني
         graph_html = create_graph(str(selected_id), str(row["Source Text"]), mappings)
         components.html(graph_html, height=680)
 
